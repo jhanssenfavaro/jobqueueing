@@ -19,15 +19,26 @@ def runworker(queuename):
     #Burst mode kills the worker once it has completed its jobs
     qs=[queuename]
     with Connection(r):
+        if (get_workers().split(';')[0] == "0") :
+            time.sleep(5)
+            multiprocessing.Process(target=Worker(qs,connection=r,name=queuename).work, kwargs={'burst': False}).start()
         if Worker.find_by_key('rq:worker:'+queuename):
             workerInstance = Worker.find_by_key('rq:worker:name')
             print("Worker for queue "+queuename+" is already running")
             print("Current amount of running jobs: ")
         else:
-            print("worker was not alive, starting")
-            multiprocessing.Process(target=Worker(qs,connection=r,name=queuename).work, kwargs={'burst': False}).start()
-            # print("Workers: "+str(list_workers()))
-            #print("worker pid: "+multiprocessingstr(.Process(target=Worker)(qs).work).pid())
+            try:
+                print("worker was not alive, starting")
+                multiprocessing.Process(target=Worker(qs,connection=r,name=queuename).work, kwargs={'burst': False}).start()
+                #worker = Worker(qs, connection=r, name=queuename)
+                # print("Workers: "+str(list_workers()))
+                #print("worker pid: "+multiprocessingstr(.Process(target=Worker)(qs).work).pid())
+                if (get_workers() == "0") :
+                    time.sleep(5)
+                    multiprocessing.Process(target=Worker(qs,connection=r,name=queuename).work, kwargs={'burst': False}).start()
+            except:
+                print("Falhou o start do worker")
+                pass
 
 def background_task(n):
 
@@ -52,7 +63,7 @@ def get_workers():
     q_len = len(queue)
     workersQueueInstance = Worker.all(queue=queue)
     print("Current number of started workers for "+queuename+" equal to "+str(workersQueueInstance))
-    return f"Current Tasks: {q_len} tasks in the queue and total of {workersRedisCount}  workers."
+    return str(workersRedisCount)+";"+str(q_len)
 
 @app.route("/task")
 def add_task():
@@ -70,5 +81,3 @@ def add_task():
 
 if __name__ == "__main__":
     app.run()
-    
-#Workers will read enqueued jobs
