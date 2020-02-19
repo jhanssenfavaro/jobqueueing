@@ -61,9 +61,15 @@ def get_workers():
     # Count the number of workers for a specific queue
     queue = Queue(queuename, connection=r)
     q_len = len(queue)
-    workersQueueInstance = Worker.all(queue=queue)
+    print("Current "+queuename+" queue len: "+str(q_len))
+    # workersQueueInstance = Worker.all(queue=queue)
+    workersQueueInstance = Worker.count(queue=queue)
+    # for working in workersQueueInstance:
+    print("Working: "+str(workersQueueInstance))
+    # currworker = workers[0]
+
     print("Current number of started workers for "+queuename+" equal to "+str(workersQueueInstance))
-    return str(workersRedisCount)+";"+str(q_len)
+    return str(workersQueueInstance)+";"+str(q_len)
 
 @app.route("/task")
 def add_task():
